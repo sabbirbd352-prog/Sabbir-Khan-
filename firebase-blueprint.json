@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Records of income and expenses for the foundation",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Whether this is money coming in or going out"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary value of the transaction"
+        },
+        "category": {
+          "type": "string",
+          "description": "The sector or category of the transaction"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date of the transaction"
+        },
+        "description": {
+          "type": "string",
+          "description": "Details about the transaction"
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the user who added this record"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["type", "amount", "category", "date", "userId"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Sectors or categories for classification",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the category in Bengali"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"]
+        },
+        "userId": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "type", "userId"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Main collection for financial records"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "User defined sectors or categories"
+    }
+  }
+}

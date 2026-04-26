@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTransaction(data) {
+      return data.type in ['income', 'expense'] &&
+             data.amount is number &&
+             data.category is string && data.category.size() <= 100 &&
+             data.date is string &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.userId == request.auth.uid &&
+             data.createdAt != null &&
+             data.updatedAt != null;
+    }
+
+    match /transactions/{transactionId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidTransaction(request.resource.data) &&
+                      request.resource.data.createdAt == request.time &&
+                      request.resource.data.updatedAt == request.time;
+      allow update: if isSignedIn() && isOwner(resource.data.userId) && 
+                      isValidTransaction(request.resource.data) &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      request.resource.data.updatedAt == request.time;
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
+    match /categories/{categoryId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.name is string && 
+                      request.resource.data.name.size() > 0 &&
+                      request.resource.data.type in ['income', 'expense'];
+      allow update: if isSignedIn() && isOwner(resource.data.userId) &&
+                      request.resource.data.userId == resource.data.userId &&
+                      request.resource.data.name is string &&
+                      request.resource.data.type in ['income', 'expense'];
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+  }
+}
